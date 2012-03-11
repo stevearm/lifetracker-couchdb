@@ -1,11 +1,12 @@
 function(doc) {
-	for (var key in doc) {
-		if (key.indexOf('_') != 0) { continue; }
-		emit(null, key);
-		if (typeof(doc[key]) === 'object') {
-			for (var key2 in doc[key]) {
-				emit(key,key2);
-			}
+	function processNode(prefix, node) {
+		if (typeof(node) !== 'object' || Array.isArray(node)) { return; }
+		for (var key in node) {
+			if (key.indexOf('_') == 0) { continue; }
+			emit(prefix, key);
+			processNode( (prefix === null)?key:prefix+"."+key, node[key]);
 		}
 	}
+	
+	processNode(null, doc);
 }
