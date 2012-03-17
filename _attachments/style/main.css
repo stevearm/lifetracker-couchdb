@@ -1,5 +1,19 @@
 body {
-  font:1em Helvetica, sans-serif;
+}
+
+#menu {
+	width: 100%;
+	height: 25px;
+	background: grey;
+	color: white;
+	border-radius: 10px;
+}
+
+.menu-item, .menu-item>a:link, .menu-item>a:visited, .menu-item>a:hover, .menu-item>a:focus, .menu-item>a:active{
+	margin: 10px;
+	color: white;
+	vertical-align: middle;
+	text-decoration: none;
 }
 
 .event {

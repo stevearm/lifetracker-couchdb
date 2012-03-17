@@ -5,6 +5,9 @@
 		<link rel="stylesheet" href="style/main.css" type="text/css">
 	</head>
 	<body>
+		<div id="menu">
+			<span class="menu-item">[ <a href="index.html">Show events</a> ]</span>
+		</div>
 		<div>
 			When <input id="when_date" type="date"/>
 			<input id="when_hour" type="text" size="5"/>
@@ -16,7 +19,6 @@
 
 			<button onclick="saveEvent();">Save</button>
 		</div>
-		<div id="recent_events"></div>
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
@@ -28,14 +30,6 @@
 	<script src="vendor/couchapp/jquery.mustache.js"></script>
 
 	<!-- templates used by app.js -->
-	<script id="recent-events" type="text/x-mustache" charset="utf-8">
-		<h3>Recent Events</h3>
-		<ul>{{#events}}
-			<li><b>{{#when}}{{local}}{{/when}}</b>: Ate food from {{#food}}{{where}}:<ul>{{#what}}
-				<li>{{.}}
-			{{/what}}</ul>{{/food}}</li>
-		{{/events}}</ul>
-	</script>
 	<script id="event-node-object" type="text/x-mustache" charset="utf-8">
 		<li class="eventNode"><span class="key">{{key}}</span>
 			<button onclick="removeNode(this);">-</button>
