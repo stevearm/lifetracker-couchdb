@@ -5,22 +5,7 @@
 		<link rel="stylesheet" href="style/main.css" type="text/css">
 	</head>
 	<body>
-		<div>
-			When <input id="when_date" type="date"/>
-			<input id="when_hour" type="text" size="5"/>
-			<input id="when_min" type="text" size="5"/>
-
-			<ul id="properties">
-			</ul>
-			<input id="rootKey" type="text"/> <button onclick="addRootNode();">+ Root Node</button>
-
-			<div>
-				Key <input name="key" type="text"/> Value <input name="value" type="text"/>
-				<input type="button" onclick="addProperty();" value="+"/>
-			</div>
-			<button onclick="saveEvent();">Save</button>
-		</div>
-		<div id="recent_events"></div>
+		<div id="recent-events"></div>
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
@@ -32,59 +17,45 @@
 	<script src="vendor/couchapp/jquery.mustache.js"></script>
 
 	<!-- templates used by app.js -->
-	<script id="recent-events" type="text/x-mustache" charset="utf-8">
-		<h3>Recent Events</h3>
-		<ul>{{#events}}
-			<li><b>{{#when}}{{local}}{{/when}}</b>: Ate food from {{#food}}{{where}}:<ul>{{#what}}
-				<li>{{.}}
-			{{/what}}</ul>{{/food}}</li>
-		{{/events}}</ul>
+	<script id="recent-events-template" type="text/x-mustache" charset="utf-8">{{#events}}
+		<div class="event">
+			<div class="event-node-value">
+				<span class="event-node-key">when</span>
+				{{#when}}{{local}}{{/when}}
+			</div>
+			<div class="event-node-object">{{#food}}
+				<span class="event-node-key">food</span>
+				<ul>
+					<li><div class="event-node-value">
+							<div class="event-node-key">where</div>
+							{{where}}
+					</div></li>
+					<li><div class="event-node-array">
+						<span class="event-node-key">what</span>
+						<ul>{{#what}}
+							<li>{{.}}</li>{{/what}}
+						</ul>
+					</div></li>
+				</ul>{{/food}}
+			</div>
+		</div>{{/events}}
 	</script>
-	<script id="event-node" type="text/x-mustache" charset="utf-8">
-		<li class="eventNode"><span class="key">{{key}}</span>
-			<button onclick="removeNode(this);">-</button>
-			(
-				<input name="key" type="text"/>
-				<button onclick="addNode(this);">+Node</button>
-				<button onclick="addList(this);">+List</button>
-				<input name="value" type="text"/>
-				<button onclick="addValue(this);">+Value</button>
-			)
-			<ul></ul>
-		</li>
-	</script>
-	<script id="event-list" type="text/x-mustache" charset="utf-8">
-		<li class="eventList"><span class="key">{{key}}</span>
-			<button onclick="removeNode(this);">-</button>
-			(
-				<input name="value" type="text"/>
-				<button onclick="addListValue(this);">+Value</button>
-			)
-			<ul></ul>
-		</li>
-	</script>
-	<script id="event-list-value" type="text/x-mustache" charset="utf-8">
-		<li class="eventListValue"><span class="value">{{value}}</span> <button onclick="removeNode(this);">-</button></li>
-	</script>
-	<script id="event-value" type="text/x-mustache" charset="utf-8">
-		<li class="eventValue"><span class="key">{{key}}</span> : <span class="value">{{value}}</span><button onclick="removeNode(this);">-</button></li>
-	</script>
+
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
-function saveEvent() {
-	var event = {};
-	var date = new Date($('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val());
-	event.when = {};
-	event.when.utc = date.getTime();
-	event.when.offset = date.getTimezoneOffset();
-	event.when.local = $('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val();
-	$('#properties').children().each(function(key,node){
-		var result = extractNode(node);
-		if (result) {
-			event[result[0]] = result[1];
+function bootstrap() {
+	db.view(design + "/recent_events", {
+		descending : "true",
+		limit : 5,
+		update_seq : true,
+		success : function(data) {
+			var template = $("#recent-events-template").html();
+			var html = $.mustache(template, {
+				events : data.rows.map(function(r) {return r.value;})
+			});
+			$("#recent-events").html(html);
 		}
 	});
-	console.error("Should save event", event);
-}
+};
 	</script>
 </html>

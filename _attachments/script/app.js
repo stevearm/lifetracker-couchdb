@@ -1,22 +1,16 @@
-function drawEvents() {
-	db.view(design + "/recent_events", {
-		descending : "true",
-		limit : 5,
-		update_seq : true,
-		success : function(data) {
-			var them = $.mustache($("#recent-events").html(), {
-				events : data.rows.map(function(r) {return r.value;})
-			});
-			$("#recent_events").html(them);
-		}
-	});
-};
+var design, db;
+$(function() {
+	var path = unescape(document.location.pathname).split('/');
+	design = path[3];
+	db = $.couch.db(path[1]);
+	if (window.bootstrap) { window.bootstrap(); }
+});
 
 function addRootNode() {
 	var keyBox = $('#rootKey');
 	var key = keyBox.val();
 	keyBox.val('');
-	$('#properties').append($.mustache($("#event-node").html(), { key : key }));
+	$('#properties').append($.mustache($("#event-node-object").html(), { key : key }));
 }
 
 function addNode(node) {
@@ -25,7 +19,7 @@ function addNode(node) {
 	var keyBox = parent.children('input[name=key]');
 	var key = keyBox.val();
 	keyBox.val('');
-	parent.children('ul').append($.mustache($("#event-node").html(), { key : key }));
+	parent.children('ul').append($.mustache($("#event-node-object").html(), { key : key }));
 }
 
 function addList(node) {
@@ -34,7 +28,7 @@ function addList(node) {
 	var keyBox = parent.children('input[name=key]');
 	var key = keyBox.val();
 	keyBox.val('');
-	parent.children('ul').append($.mustache($("#event-list").html(), { key : key }));
+	parent.children('ul').append($.mustache($("#event-node-list").html(), { key : key }));
 }
 
 function addListValue(node) {
@@ -43,7 +37,7 @@ function addListValue(node) {
 	var valueBox = parent.children('input[name=value]');
 	var value = valueBox.val();
 	valueBox.val('');
-	parent.children('ul').append($.mustache($("#event-list-value").html(), { value : value }));
+	parent.children('ul').append($.mustache($("#event-node-list-value").html(), { value : value }));
 }
 
 function addValue(node) {
@@ -55,7 +49,7 @@ function addValue(node) {
 	var valueBox = parent.children('input[name=value]');
 	var value = valueBox.val();
 	valueBox.val('');
-	parent.children('ul').append($.mustache($("#event-value").html(), { key : key, value : value }));
+	parent.children('ul').append($.mustache($("#event-node-value").html(), { key : key, value : value }));
 }
 
 function removeNode(node) {
@@ -100,22 +94,3 @@ function extractNode(nodePrimative) {
 	console.warning("Unknown node type");
 	return null;
 }
-
-var design, db;
-$(function() {
-	var path = unescape(document.location.pathname).split('/');
-	design = path[3];
-	db = $.couch.db(path[1]);
-		newEvent = {};
-	{
-		var now = new Date();
-		var month = now.getMonth() + 1;
-		if (month < 10) { month = '0' + month; }
-		var day = now.getDate();
-		if (day < 10) { day = '0' + day; }
-		$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
-		$('#when_hour').val(now.getHours());
-		$('#when_min').val(now.getMinutes());
-	}
-	drawEvents();
-});

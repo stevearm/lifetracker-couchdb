@@ -1,13 +1,65 @@
-/* add styles here */
-
 body {
   font:1em Helvetica, sans-serif;
 }
 
+.event {
+	position:relative;
+	margin: 10px;
+	padding: 5px;
+	border: 5px solid black;
+	border-radius: 15px;
+}
 
-#items li {
-  border:4px solid #f5f5ff;
-  background:#fff;
-  padding:8px;
-  margin:4px 0;
+.event-node-value, .event-node-array, .event-node-object {
+	margin: 10px;
+	padding: 5px;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 5px;
+}
+
+.event-node-key {
+	display: inline-block;
+	padding: 5px 10px;
+	width: 100px;
+	border-radius: 5px;
+}
+
+.event-node-value {
+	border-color: green;
+	color: green;
+}
+
+.event-node-value > .event-node-key {
+	color: white;
+	background: green;
+}
+
+.event-node-array {
+	border-color: green;
+	color: green;
+}
+
+.event-node-array > .event-node-key {
+	color: white;
+	background: green;
+}
+
+.event-node-array > ul {
+	margin-left: 110px;
+}
+
+.event-node-object {
+	border-color: grey;
+	color: grey;
+}
+
+.event-node-object > .event-node-key {
+	color: white;
+	background: grey;
+}
+
+.event-node-object > ul {
+	margin-left: 80px;
+	list-style-type: none;
 }

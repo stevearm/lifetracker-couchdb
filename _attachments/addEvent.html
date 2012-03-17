@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Lifetracker</title>
+		<link rel="stylesheet" href="style/main.css" type="text/css">
+	</head>
+	<body>
+		<div>
+			When <input id="when_date" type="date"/>
+			<input id="when_hour" type="text" size="5"/>
+			<input id="when_min" type="text" size="5"/>
+
+			<ul id="properties">
+			</ul>
+			<input id="rootKey" type="text"/> <button onclick="addRootNode();">+ Root Node</button>
+
+			<button onclick="saveEvent();">Save</button>
+		</div>
+		<div id="recent_events"></div>
+	</body>
+	<script src="/_utils/script/sha1.js"></script>
+	<script src="/_utils/script/json2.js"></script>
+	<script src="/_utils/script/jquery.js"></script>
+	<script src="/_utils/script/jquery.couch.js"></script>
+	<script src="vendor/couchapp/jquery.couchLogin.js"></script>
+	<script src="vendor/couchapp/jquery.couchProfile.js"></script>
+	<script src="vendor/couchapp/md5.js"></script>
+	<script src="vendor/couchapp/jquery.mustache.js"></script>
+
+	<!-- templates used by app.js -->
+	<script id="recent-events" type="text/x-mustache" charset="utf-8">
+		<h3>Recent Events</h3>
+		<ul>{{#events}}
+			<li><b>{{#when}}{{local}}{{/when}}</b>: Ate food from {{#food}}{{where}}:<ul>{{#what}}
+				<li>{{.}}
+			{{/what}}</ul>{{/food}}</li>
+		{{/events}}</ul>
+	</script>
+	<script id="event-node-object" type="text/x-mustache" charset="utf-8">
+		<li class="eventNode"><span class="key">{{key}}</span>
+			<button onclick="removeNode(this);">-</button>
+			(
+				<input name="key" type="text"/>
+				<button onclick="addNode(this);">+Node</button>
+				<button onclick="addList(this);">+List</button>
+				<input name="value" type="text"/>
+				<button onclick="addValue(this);">+Value</button>
+			)
+			<ul></ul>
+		</li>
+	</script>
+	<script id="event-node-list" type="text/x-mustache" charset="utf-8">
+		<li class="eventList"><span class="key">{{key}}</span>
+			<button onclick="removeNode(this);">-</button>
+			(
+				<input name="value" type="text"/>
+				<button onclick="addListValue(this);">+Value</button>
+			)
+			<ul></ul>
+		</li>
+	</script>
+	<script id="event-node-list-value" type="text/x-mustache" charset="utf-8">
+		<li class="eventListValue"><span class="value">{{value}}</span> <button onclick="removeNode(this);">-</button></li>
+	</script>
+	<script id="event-node-value" type="text/x-mustache" charset="utf-8">
+		<li class="eventValue"><span class="key">{{key}}</span> : <span class="value">{{value}}</span><button onclick="removeNode(this);">-</button></li>
+	</script>
+	<script src="script/app.js"></script>
+	<script type="text/javascript">
+function saveEvent() {
+	var event = {};
+	var date = new Date($('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val());
+	event.when = {};
+	event.when.utc = date.getTime();
+	event.when.offset = date.getTimezoneOffset();
+	event.when.local = $('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val();
+	$('#properties').children().each(function(key,node){
+		var result = extractNode(node);
+		if (result) {
+			event[result[0]] = result[1];
+		}
+	});
+	console.error("Should save event", event);
+}
+
+function bootstrap() {
+	var now = new Date();
+	var month = now.getMonth() + 1;
+	if (month < 10) { month = '0' + month; }
+	var day = now.getDate();
+	if (day < 10) { day = '0' + day; }
+	$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
+	$('#when_hour').val(now.getHours());
+	$('#when_min').val(now.getMinutes());
+
+	// Show a default node for debugging
+	$('#rootKey').val("food");
+	addRootNode();
+}
+	</script>
+</html>
