@@ -3,6 +3,7 @@
 	<head>
 		<title>Lifetracker</title>
 		<link rel="stylesheet" href="style/main.css" type="text/css">
+		<meta name="viewport" content="width=device-width"/>
 	</head>
 	<body>
 		<div>
@@ -44,7 +45,7 @@ function addFood() {
 	var foodField = $("#new-food-what");
 	var food = foodField.val();
 	foodField.val('');
-	$("#food-what").append($('<li id="'+id+'">'+food+' <button onclick="deleteFood(\''+id+'\');">-</button>'));
+	$("#food-what").append($('<li id="'+id+'"><span>'+food+'</span> <button onclick="deleteFood(\''+id+'\');">-</button>'));
 }
 
 function deleteFood(id) {
@@ -53,17 +54,23 @@ function deleteFood(id) {
 
 function saveEvent() {
 	var event = {};
-	var date = new Date($('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val());
+	var dateParts = $("#when_date").val().split("-");
+	var hour = $('#when_hour').val();
+	var min = $('#when_min').val();
+	console.debug("Year: " + dateParts[0] + ", Month: " + dateParts[1] + ", Day: " + dateParts[2]
+		+ ", Hour: " + hour + ", Min: " + min);
+	var date = new Date(dateParts[0], dateParts[1]-1, dateParts[2], hour, min, 0, 0);
+	console.debug("Created date: " + date, date);
 	event.when = {};
-	event.when.utc = date.getTime();
+	event.when.utc = Math.floor(date.getTime() / 1000);
 	event.when.offset = date.getTimezoneOffset();
 	event.when.local = [ date.getFullYear(), date.getMonth()+1, date.getDate(), date.getHours(), date.getMinutes() ];
 	event.food = {};
 	event.food.where = $("#food-where").val();
 	event.food.what = [];
-	$('#food-what').children().each(function(key,node){
+	$('#food-what > li > span').each(function(key,node){
 		var text = $(node).text();
-		text = text.slice(0, text.length - 2);
+		//text = text.slice(0, text.length);
 		event.food.what.push(text);
 	});
 	console.debug("Saving event", event);
