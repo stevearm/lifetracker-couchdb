@@ -7,16 +7,13 @@
 	</head>
 	<body>
 		<div>
-			When <input id="when_date" type="date"/>
-			<input id="when_hour" type="text" size="5"/>
-			<input id="when_min" type="text" size="5"/>
-
-			<div>Food.where: <input id="food-where" type="text" size="20" value="Home"/>
-			<div>Food.what:
-				<ul id="food-what">
-				</ul>
-				<input id="new-food-what" type="text"/> <button onclick="addFood();">+ food</button>
-			</div>
+			Date <input id="when_date" type="date"/><br/>
+			Time <select id="when_hour"></select>
+			<select id="when_min"></select>
+			<div>Food.where: <input id="food-where" type="text" size="10" value="Home"/>
+			<div>Food.what: <ul id="food-what"></ul></div>
+			<input id="new-food-what" type="text"/><br/>
+			<button onclick="addFood();">+ food</button>
 			<button onclick="saveEvent();">Save</button>
 		</div>
 		<div id="recent_events"></div>
@@ -111,8 +108,21 @@ $(function() {
 		var day = now.getDate();
 		if (day < 10) { day = '0' + day; }
 		$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
-		$('#when_hour').val(now.getHours());
-		$('#when_min').val(now.getMinutes());
+		
+		var fillSelect = function(element, max, current) {
+			for (var i = 0; i < max; i++) {
+				var temp = ''+i;
+				if (i < 10) { temp = '0'+i; }
+				if (i == current) {
+					temp = '<option selected>'+temp+'</option>';
+				} else {
+					temp = '<option>'+temp+'</option>';
+				}
+				element.append(temp);
+			}
+		}
+		fillSelect($('#when_hour'), 24, now.getHours());
+		fillSelect($('#when_min'), 60, now.getMinutes());
 	}
 	drawEvents();
 });
