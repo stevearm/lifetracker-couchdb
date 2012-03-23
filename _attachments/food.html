@@ -31,9 +31,7 @@
 	<script id="recent-events" type="text/x-mustache" charset="utf-8">
 		<h3>Recent Events</h3>
 		<ul>{{#events}}
-			<li><b>{{#when}}{{local}}{{/when}}</b>: Ate food from {{#food}}{{where}}:<ul>{{#what}}
-				<li>{{.}}
-			{{/what}}</ul>{{/food}}</li>
+			<li><b>{{when}}</b>: Ate food from {{where}}:<ul>{{#what}}<li>{{.}}{{/what}}</ul></li>
 		{{/events}}</ul>
 	</script>
 	<script type="text/javascript">
@@ -67,7 +65,6 @@ function saveEvent() {
 	event.food.what = [];
 	$('#food-what > li > span').each(function(key,node){
 		var text = $(node).text();
-		//text = text.slice(0, text.length);
 		event.food.what.push(text);
 	});
 	console.debug("Saving event", event);
@@ -88,7 +85,18 @@ function drawEvents() {
 		update_seq : true,
 		success : function(data) {
 			var them = $.mustache($("#recent-events").html(), {
-				events : data.rows.map(function(r) {return r.value;})
+				events : data.rows.map(function(r) {
+					var result = {};
+					var when = r.value.when.local;
+					if (Array.isArray(when)) {
+						result.when = when[1]+" "+when[2]+", "+when[0]+" @"+when[3]+":"+when[4];
+					} else {
+						result.when = when;
+					}
+					result.where = r.value.food.where;
+					result.what = r.value.food.what;
+					return result;
+				})
 			});
 			$("#recent_events").html(them);
 		}
@@ -100,7 +108,6 @@ $(function() {
 	var path = unescape(document.location.pathname).split('/');
 	design = path[3];
 	db = $.couch.db(path[1]);
-		newEvent = {};
 	{
 		var now = new Date();
 		var month = now.getMonth() + 1;
