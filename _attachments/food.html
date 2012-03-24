@@ -3,6 +3,9 @@
 	<head>
 		<title>Lifetracker</title>
 		<link rel="stylesheet" href="style/main.css" type="text/css">
+		<link type="text/css" href="style/jquery-ui-1.8.18.custom.css" rel="stylesheet" />
+		<script type="text/javascript" src="script/jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="script/jquery-ui-1.8.18.custom.min.js"></script>
 		<meta name="viewport" content="width=device-width"/>
 	</head>
 	<body>
@@ -12,7 +15,7 @@
 			<select id="when_min"></select>
 			<div>Food.where: <input id="food-where" type="text" size="10" value="Home"/>
 			<div>Food.what: <ul id="food-what"></ul></div>
-			<input id="new-food-what" type="text"/><br/>
+			<input id="new-food-what"/><br/>
 			<button onclick="addFood();">+ food</button>
 			<button onclick="saveEvent();">Save</button>
 		</div>
@@ -20,7 +23,6 @@
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
-	<script src="/_utils/script/jquery.js"></script>
 	<script src="/_utils/script/jquery.couch.js"></script>
 	<script src="vendor/couchapp/jquery.couchLogin.js"></script>
 	<script src="vendor/couchapp/jquery.couchProfile.js"></script>
@@ -52,10 +54,7 @@ function saveEvent() {
 	var dateParts = $("#when_date").val().split("-");
 	var hour = $('#when_hour').val();
 	var min = $('#when_min').val();
-	console.debug("Year: " + dateParts[0] + ", Month: " + dateParts[1] + ", Day: " + dateParts[2]
-		+ ", Hour: " + hour + ", Min: " + min);
 	var date = new Date(dateParts[0], dateParts[1]-1, dateParts[2], hour, min, 0, 0);
-	console.debug("Created date: " + date, date);
 	event.when = {};
 	event.when.utc = Math.floor(date.getTime() / 1000);
 	event.when.offset = date.getTimezoneOffset();
@@ -67,7 +66,6 @@ function saveEvent() {
 		var text = $(node).text();
 		event.food.what.push(text);
 	});
-	console.debug("Saving event", event);
 	db.saveDoc(event, {
 		success: function() {
 			drawEvents();
@@ -79,7 +77,7 @@ function saveEvent() {
 }
 
 function drawEvents() {
-	db.view(design + "/recent_events", {
+	db.view(design + "/events", {
 		descending : "true",
 		limit : 5,
 		update_seq : true,
@@ -88,11 +86,7 @@ function drawEvents() {
 				events : data.rows.map(function(r) {
 					var result = {};
 					var when = r.value.when.local;
-					if (Array.isArray(when)) {
-						result.when = when[1]+" "+when[2]+", "+when[0]+" @"+when[3]+":"+when[4];
-					} else {
-						result.when = when;
-					}
+					result.when = when[1]+" "+when[2]+", "+when[0]+" @"+when[3]+":"+when[4];
 					result.where = r.value.food.where;
 					result.what = r.value.food.what;
 					return result;
@@ -102,6 +96,20 @@ function drawEvents() {
 		}
 	});
 };
+
+function populateAutoSuggest(field, key) {
+	db.view(design + "/event_values", {
+		group: true,
+		startkey: [key],
+		endkey: [key,{}],
+		success: function(data) {
+			var results = data.rows.map(function(r){
+				return r.key[1];
+			});
+			field.autocomplete({"source":results});
+		}
+	});
+}
 
 var design, db;
 $(function() {
@@ -130,6 +138,9 @@ $(function() {
 		}
 		fillSelect($('#when_hour'), 24, now.getHours());
 		fillSelect($('#when_min'), 60, now.getMinutes());
+		
+		populateAutoSuggest($("#food-where"), "food.where");
+		populateAutoSuggest($("#new-food-what"), "food.what");
 	}
 	drawEvents();
 });
