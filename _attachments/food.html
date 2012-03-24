@@ -76,6 +76,11 @@ function saveEvent() {
 	});
 }
 
+function fill(number) {
+	if (number <= 9) { return "0"+number; }
+	return ""+number;
+}
+
 function drawEvents() {
 	db.view(design + "/events", {
 		descending : "true",
@@ -86,7 +91,7 @@ function drawEvents() {
 				events : data.rows.map(function(r) {
 					var result = {};
 					var when = r.value.when.local;
-					result.when = when[1]+" "+when[2]+", "+when[0]+" @"+when[3]+":"+when[4];
+					result.when = when[0]+"-"+when[1]+"-"+when[2]+" @"+fill(when[3])+":"+fill(when[4]);
 					result.where = r.value.food.where;
 					result.what = r.value.food.what;
 					return result;
@@ -118,16 +123,13 @@ $(function() {
 	db = $.couch.db(path[1]);
 	{
 		var now = new Date();
-		var month = now.getMonth() + 1;
-		if (month < 10) { month = '0' + month; }
-		var day = now.getDate();
-		if (day < 10) { day = '0' + day; }
+		var month = fill(now.getMonth() + 1);
+		var day = fill(now.getDate());
 		$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
 		
 		var fillSelect = function(element, max, current) {
 			for (var i = 0; i < max; i++) {
-				var temp = ''+i;
-				if (i < 10) { temp = '0'+i; }
+				var temp = fill(i);
 				if (i == current) {
 					temp = '<option selected>'+temp+'</option>';
 				} else {
