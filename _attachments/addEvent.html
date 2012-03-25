@@ -131,7 +131,6 @@ function addProperty() {
 	var id = "property_"+key.replace(/\./g, '_');
 	var valueElement = $("#new-value");
 	var value = valueElement.val();
-	valueElement.val('');
 	var node = $("#"+id);
 	if (node.length == 0) {
 		$("#properties").append($.mustache($("#property-key-template").html(), {
@@ -143,6 +142,8 @@ function addProperty() {
 	node.append($.mustache($("#property-value-template").html(), {
 		value : value
 	}));
+	valueElement.val('');
+	valueElement.focus();
 }
 
 function bootstrap() {
@@ -150,15 +151,6 @@ function bootstrap() {
 	
 	populateKeyAutoSuggest();
 	$("#new-key").blur(populateValueAutoSuggest);
-	
-	var fakeProperty = function(key, value) {
-		$("#new-key").val(key);
-		$("#new-value").val(value);
-		addProperty();
-	}
-	//fakeProperty("food.where", "Home");
-	//fakeProperty("food.what", "Bacon");
-	//fakeProperty("food.what", "Eggs");
 }
 	</script>
 </html>
