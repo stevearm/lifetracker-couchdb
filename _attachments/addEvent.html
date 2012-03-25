@@ -3,6 +3,9 @@
 	<head>
 		<title>Lifetracker</title>
 		<link rel="stylesheet" href="style/main.css" type="text/css">
+		<link type="text/css" href="style/jquery-ui-1.8.18.custom.css" rel="stylesheet" />
+		<script type="text/javascript" src="script/jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="script/jquery-ui-1.8.18.custom.min.js"></script>
 	</head>
 	<body>
 		<div id="menu">
@@ -19,7 +22,6 @@
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
-	<script src="/_utils/script/jquery.js"></script>
 	<script src="/_utils/script/jquery.couch.js"></script>
 	<script src="vendor/couchapp/jquery.couchLogin.js"></script>
 	<script src="vendor/couchapp/jquery.couchProfile.js"></script>
@@ -37,6 +39,33 @@
 	</script>
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
+function populateKeyAutoSuggest() {
+	db.view(design + "/event_keys", {
+		group: true,
+		success: function(data) {
+			var results = data.rows.map(function(r){
+				return r.key;
+			});
+			$("#new-key").autocomplete({"source":results});
+		}
+	});
+}
+
+function populateValueAutoSuggest() {
+	var key = $("#new-key").val();
+	db.view(design + "/event_values", {
+		group: true,
+		startkey: [key],
+		endkey: [key,{}],
+		success: function(data) {
+			var results = data.rows.map(function(r){
+				return r.key[1];
+			});
+			$("#new-value").autocomplete({"source":results});
+		}
+	});
+}
+
 function buildObject(event, keyParts, value) {
 	if (keyParts.length == 1) {
 		if (value.length == 1) {
@@ -119,14 +148,17 @@ function addProperty() {
 function bootstrap() {
 	initDate();
 	
+	populateKeyAutoSuggest();
+	$("#new-key").blur(populateValueAutoSuggest);
+	
 	var fakeProperty = function(key, value) {
 		$("#new-key").val(key);
 		$("#new-value").val(value);
 		addProperty();
 	}
-	fakeProperty("food.where", "Home");
-	fakeProperty("food.what", "Bacon");
-	fakeProperty("food.what", "Eggs");
+	//fakeProperty("food.where", "Home");
+	//fakeProperty("food.what", "Bacon");
+	//fakeProperty("food.what", "Eggs");
 }
 	</script>
 </html>
