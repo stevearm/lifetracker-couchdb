@@ -116,34 +116,32 @@ function populateAutoSuggest(field, key) {
 	});
 }
 
+function initDate() {
+	var now = new Date();
+	$('#when_date').val(now.getFullYear()+"-"+fill(now.getMonth() + 1)+ "-"+fill(now.getDate()));
+	var fillSelect = function(element, max, current) {
+		for (var i = 0; i < max; i++) {
+			var temp = fill(i);
+			if (i == current) {
+				temp = '<option selected>'+temp+'</option>';
+			} else {
+				temp = '<option>'+temp+'</option>';
+			}
+			element.append(temp);
+		}
+	}
+	fillSelect($('#when_hour'), 24, now.getHours());
+	fillSelect($('#when_min'), 60, now.getMinutes());
+}
+
 var design, db;
 $(function() {
 	var path = unescape(document.location.pathname).split('/');
 	design = path[3];
 	db = $.couch.db(path[1]);
-	{
-		var now = new Date();
-		var month = fill(now.getMonth() + 1);
-		var day = fill(now.getDate());
-		$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
-		
-		var fillSelect = function(element, max, current) {
-			for (var i = 0; i < max; i++) {
-				var temp = fill(i);
-				if (i == current) {
-					temp = '<option selected>'+temp+'</option>';
-				} else {
-					temp = '<option>'+temp+'</option>';
-				}
-				element.append(temp);
-			}
-		}
-		fillSelect($('#when_hour'), 24, now.getHours());
-		fillSelect($('#when_min'), 60, now.getMinutes());
-		
-		populateAutoSuggest($("#food-where"), "food.where");
-		populateAutoSuggest($("#new-food-what"), "food.what");
-	}
+	initDate();
+	populateAutoSuggest($("#food-where"), "food.where");
+	populateAutoSuggest($("#new-food-what"), "food.what");
 	drawEvents();
 });
 	</script>

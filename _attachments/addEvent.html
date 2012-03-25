@@ -9,14 +9,11 @@
 			<span class="menu-item">[ <a href="index.html">Show events</a> ]</span>
 		</div>
 		<div>
-			When <input id="when_date" type="date"/>
-			<input id="when_hour" type="text" size="5"/>
-			<input id="when_min" type="text" size="5"/>
-
-			<ul id="properties">
-			</ul>
-			<input id="rootKey" type="text"/> <button onclick="addRootNode();">+ Root Node</button>
-
+			Date <input id="when-date" type="date"/><br/>
+			Time <select id="when-hour"></select>
+			<select id="when-min"></select>
+			<ul id="properties"></ul>
+			Key <input id="new-key" type="text"/> Value <input id="new-value" type="text"/><button onclick="addProperty();">+</button><br/>
 			<button onclick="saveEvent();">Save</button>
 		</div>
 	</body>
@@ -30,66 +27,106 @@
 	<script src="vendor/couchapp/jquery.mustache.js"></script>
 
 	<!-- templates used by app.js -->
-	<script id="event-node-object" type="text/x-mustache" charset="utf-8">
-		<li class="eventNode"><span class="key">{{key}}</span>
-			<button onclick="removeNode(this);">-</button>
-			(
-				<input name="key" type="text"/>
-				<button onclick="addNode(this);">+Node</button>
-				<button onclick="addList(this);">+List</button>
-				<input name="value" type="text"/>
-				<button onclick="addValue(this);">+Value</button>
-			)
-			<ul></ul>
+	<script id="property-key-template" type="text/x-mustache" charset="utf-8">
+		<li class="event-node-value" id="{{id}}">
+			<span class="key">{{key}}</span> =
 		</li>
 	</script>
-	<script id="event-node-list" type="text/x-mustache" charset="utf-8">
-		<li class="eventList"><span class="key">{{key}}</span>
-			<button onclick="removeNode(this);">-</button>
-			(
-				<input name="value" type="text"/>
-				<button onclick="addListValue(this);">+Value</button>
-			)
-			<ul></ul>
-		</li>
-	</script>
-	<script id="event-node-list-value" type="text/x-mustache" charset="utf-8">
-		<li class="eventListValue"><span class="value">{{value}}</span> <button onclick="removeNode(this);">-</button></li>
-	</script>
-	<script id="event-node-value" type="text/x-mustache" charset="utf-8">
-		<li class="eventValue"><span class="key">{{key}}</span> : <span class="value">{{value}}</span><button onclick="removeNode(this);">-</button></li>
+	<script id="property-value-template" type="text/x-mustache" charset="utf-8">
+		<button onclick="removeProperty(this);">{{value}}</button>
 	</script>
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
+function buildObject(event, keyParts, value) {
+	if (keyParts.length == 1) {
+		if (value.length == 1) {
+			event[keyParts[0]] = value[0];
+		} else {
+			event[keyParts[0]] = value;
+		}
+	} else {
+		var node = event[keyParts[0]];
+		if (node == null) {
+			node = {};
+			event[keyParts[0]] = node;
+		}
+		buildObject(node,  keyParts.slice(1,keyParts.length), value);
+	}
+}
+
 function saveEvent() {
 	var event = {};
-	var date = new Date($('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val());
-	event.when = {};
-	event.when.utc = date.getTime();
-	event.when.offset = date.getTimezoneOffset();
-	event.when.local = $('#when_date').val() + " " + $('#when_hour').val() + ":" + $('#when_min').val();
+	event.when = getWhen();
 	$('#properties').children().each(function(key,node){
-		var result = extractNode(node);
-		if (result) {
-			event[result[0]] = result[1];
+		var node = $(node);
+		var key = node.children(".key").text();
+		var values = [];
+		node.children("button").each(function(key, node){
+			values.push($(node).text());
+		});
+		buildObject(event, key.split("."), values);
+	});
+	db.saveDoc(event, {
+		success: function() {
+			window.location.href = "./index.html";
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("Cannot save event: " + textStatus);
 		}
 	});
-	console.error("Should save event", event);
+}
+
+function getWhen() {
+	var dateParts = $("#when-date").val().split("-");
+	var hour = $('#when-hour').val();
+	var min = $('#when-min').val();
+	var date = new Date(dateParts[0], dateParts[1]-1, dateParts[2], hour, min, 0, 0);
+	return {
+		utc : Math.floor(date.getTime() / 1000),
+		offset : date.getTimezoneOffset(),
+		local : [ date.getFullYear(), date.getMonth()+1, date.getDate(), date.getHours(), date.getMinutes() ]
+	};
+}
+
+function removeProperty(node) {
+	var valueNode = $(node);
+	var parent = valueNode.parent();
+	valueNode.remove();
+	if (parent.children("button").length == 0) {
+		parent.remove();
+	}
+}
+
+function addProperty() {
+	var key = $("#new-key").val();
+	var id = "property_"+key.replace(/\./g, '_');
+	var valueElement = $("#new-value");
+	var value = valueElement.val();
+	valueElement.val('');
+	var node = $("#"+id);
+	if (node.length == 0) {
+		$("#properties").append($.mustache($("#property-key-template").html(), {
+			key : key,
+			id : "property_"+key.replace(/\./g, '_')
+		}));
+		node = $("#"+id);
+	}
+	node.append($.mustache($("#property-value-template").html(), {
+		value : value
+	}));
 }
 
 function bootstrap() {
-	var now = new Date();
-	var month = now.getMonth() + 1;
-	if (month < 10) { month = '0' + month; }
-	var day = now.getDate();
-	if (day < 10) { day = '0' + day; }
-	$('#when_date').val(now.getFullYear()+"-"+month+ "-"+day);
-	$('#when_hour').val(now.getHours());
-	$('#when_min').val(now.getMinutes());
-
-	// Show a default node for debugging
-	$('#rootKey').val("food");
-	addRootNode();
+	initDate();
+	
+	var fakeProperty = function(key, value) {
+		$("#new-key").val(key);
+		$("#new-value").val(value);
+		addProperty();
+	}
+	fakeProperty("food.where", "Home");
+	fakeProperty("food.what", "Bacon");
+	fakeProperty("food.what", "Eggs");
 }
 	</script>
 </html>

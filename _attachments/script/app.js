@@ -94,3 +94,26 @@ function extractNode(nodePrimative) {
 	console.warning("Unknown node type");
 	return null;
 }
+
+function fill(number) {
+	if (number <= 9) { return "0"+number; }
+	return ""+number;
+}
+
+function initDate() {
+	var now = new Date();
+	$("#when-date").val(now.getFullYear()+"-"+fill(now.getMonth() + 1)+ "-"+fill(now.getDate()));
+	var fillSelect = function(element, max, current) {
+		for (var i = 0; i < max; i++) {
+			var temp = fill(i);
+			if (i == current) {
+				temp = '<option selected>'+temp+'</option>';
+			} else {
+				temp = '<option>'+temp+'</option>';
+			}
+			element.append(temp);
+		}
+	}
+	fillSelect($("#when-hour"), 24, now.getHours());
+	fillSelect($("#when-min"), 60, now.getMinutes());
+}

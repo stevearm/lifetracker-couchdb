@@ -7,6 +7,7 @@
 	<body>
 		<div id="menu">
 			<span class="menu-item">[ <a href="addEvent.html">Add an event</a> ]</span>
+			<span class="menu-item">[ <a href="food.html">Food</a> ]</span>
 		</div>
 		<div id="recent-events"></div>
 	</body>
@@ -24,9 +25,9 @@
 		<div class="event">
 			<div class="event-node-value">
 				<span class="event-node-key">when</span>
-				{{#when}}{{local}}{{/when}}
+				{{when}}
 			</div>
-			<div class="event-node-object">{{#food}}
+			<div class="event-node-object">
 				<span class="event-node-key">food</span>
 				<ul>
 					<li><div class="event-node-value">
@@ -39,7 +40,7 @@
 							<li>{{.}}</li>{{/what}}
 						</ul>
 					</div></li>
-				</ul>{{/food}}
+				</ul>
 			</div>
 		</div>{{/events}}
 	</script>
@@ -47,14 +48,21 @@
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
 function bootstrap() {
-	db.view(design + "/recent_events", {
+	db.view(design + "/events", {
 		descending : "true",
 		limit : 5,
 		update_seq : true,
 		success : function(data) {
 			var template = $("#recent-events-template").html();
 			var html = $.mustache(template, {
-				events : data.rows.map(function(r) {return r.value;})
+				events : data.rows.map(function(r) {
+					var result = {};
+					var when = r.value.when.local;
+					result.when = when[0]+"-"+when[1]+"-"+when[2]+" @"+fill(when[3])+":"+fill(when[4]);
+					result.where = r.value.food.where;
+					result.what = r.value.food.what;
+					return result;
+				})
 			});
 			$("#recent-events").html(html);
 		}
