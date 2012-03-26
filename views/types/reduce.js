@@ -1,3 +1,3 @@
 function(key, values, rereduce) {
-	return sum(values);
-};
+	return values[0];
+}

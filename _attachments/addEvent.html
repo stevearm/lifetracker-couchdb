@@ -6,6 +6,7 @@
 		<link type="text/css" href="style/jquery-ui-1.8.18.custom.css" rel="stylesheet" />
 		<script type="text/javascript" src="script/jquery-1.7.1.min.js"></script>
 		<script type="text/javascript" src="script/jquery-ui-1.8.18.custom.min.js"></script>
+		<meta name="viewport" content="width=device-width"/>
 	</head>
 	<body>
 		<div id="menu">
@@ -16,7 +17,9 @@
 			Time <select id="when-hour"></select>
 			<select id="when-min"></select>
 			<ul id="properties"></ul>
-			Key <input id="new-key" type="text"/> Value <input id="new-value" type="text"/><button onclick="addProperty();">+</button><br/>
+			Key <input id="new-key" type="text"/><br/>
+			Value <input id="new-value" type="text"/><br/>
+			<button onclick="addProperty();">+</button><br/>
 			<button onclick="saveEvent();">Save</button>
 		</div>
 	</body>
@@ -39,10 +42,12 @@
 	</script>
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
+var types = null;
 function populateKeyAutoSuggest() {
-	db.view(design + "/event_keys", {
+	db.view(design + "/types", {
 		group: true,
 		success: function(data) {
+			types = data;
 			var results = data.rows.map(function(r){
 				return r.key;
 			});
@@ -53,7 +58,7 @@ function populateKeyAutoSuggest() {
 
 function populateValueAutoSuggest() {
 	var key = $("#new-key").val();
-	db.view(design + "/event_values", {
+	db.view(design + "/values", {
 		group: true,
 		startkey: [key],
 		endkey: [key,{}],
