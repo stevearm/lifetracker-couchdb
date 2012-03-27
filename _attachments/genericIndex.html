@@ -27,9 +27,18 @@
 				{{when}}
 			</div>
 			<div class="event-node-object">
-				<ul>{{#properties}}
-					<li><b>{{key}}</b> {{value}}</li>
-				{{/properties}}
+				<span class="event-node-key">food</span>
+				<ul>
+					<li><div class="event-node-value">
+							<div class="event-node-key">where</div>
+							{{where}}
+					</div></li>
+					<li><div class="event-node-array">
+						<span class="event-node-key">what</span>
+						<ul>{{#what}}
+							<li>{{.}}</li>{{/what}}
+						</ul>
+					</div></li>
 				</ul>
 			</div>
 		</div>{{/events}}
@@ -37,27 +46,10 @@
 
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
-function processNode(prefix, node, handlers) {
-	if (Array.isArray(node)) {
-		if (handlers.array) { handlers.array(prefix, node); }
-		return;
-	}
-	if (typeof(node) !== "object") {
-		if (handlers.value) { handlers.value(prefix, node); }
-		return;
-	}
-	for (var key in node) {
-		if (key.indexOf("_") == 0) { continue; }
-		if (key == "when") { continue; }
-		if (handlers.object) { handlers.object(prefix, key); }
-		processNode( (prefix === null) ? key : prefix + "." + key, node[key], handlers);
-	}
-}
-
 function bootstrap() {
 	db.view(design + "/events", {
 		descending : "true",
-		limit : 10,
+		limit : 5,
 		update_seq : true,
 		success : function(data) {
 			var template = $("#recent-events-template").html();
@@ -66,17 +58,8 @@ function bootstrap() {
 					var result = {};
 					var when = r.value.when.local;
 					result.when = when[0]+"-"+when[1]+"-"+when[2]+" @"+fill(when[3])+":"+fill(when[4]);
-					delete r.value.when;
-					result.properties = [];
-					processNode(null, r.value, {
-						"array" : function(prefix, node) {
-							result.properties.push({"key":prefix, "value":"( "+node.join(", ")+" )"}); 
-						},
-						"value" : function(prefix, node) { result.properties.push({"key":prefix, "value":node}); }
-					});
-					result.properties.sort(function(a, b) {
-						return a.key.toLowerCase() > b.key.toLowerCase()
-					});
+					result.where = r.value.food.where;
+					result.what = r.value.food.what;
 					return result;
 				})
 			});
