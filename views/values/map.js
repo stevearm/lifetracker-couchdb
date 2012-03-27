@@ -1,5 +1,5 @@
 function(doc) {
-	// !code helpers/walkNodes.js
+	// !code _attachments/script/helpers/walkNodes.js
 	
 	processNode(null, doc, {
 		"array" : function(prefix, values) {
