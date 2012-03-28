@@ -33,7 +33,7 @@
 
 	<!-- templates used by app.js -->
 	<script id="property-key-template" type="text/x-mustache" charset="utf-8">
-		<li class="event-node-value" id="{{id}}">
+		<li class="event-node-value" id="{{id}}" type="{{type}}">
 			<span class="key">{{key}}</span> =
 		</li>
 	</script>
@@ -42,13 +42,13 @@
 	</script>
 	<script src="script/app.js"></script>
 	<script type="text/javascript">
-var types = null;
+var types = {};
 function populateKeyAutoSuggest() {
 	db.view(design + "/types", {
 		group: true,
 		success: function(data) {
-			types = data;
 			var results = data.rows.map(function(r){
+				types[r.key] = r.value;
 				return r.key;
 			});
 			$("#new-key").autocomplete({"source":results});
@@ -73,11 +73,7 @@ function populateValueAutoSuggest() {
 
 function buildObject(event, keyParts, value) {
 	if (keyParts.length == 1) {
-		if (value.length == 1) {
-			event[keyParts[0]] = value[0];
-		} else {
-			event[keyParts[0]] = value;
-		}
+		event[keyParts[0]] = value;
 	} else {
 		var node = event[keyParts[0]];
 		if (node == null) {
@@ -98,7 +94,26 @@ function saveEvent() {
 		node.children("button").each(function(key, node){
 			values.push($(node).text());
 		});
-		buildObject(event, key.split("."), values);
+		if (values.length == 1) { values = values[0]; }
+		var type = node.attr("type");
+		if (type === "new") {
+			newEvents[key] = values;
+		} else {
+			switch (type) {
+				case "array":
+					if (!Array.isArray(values)) {
+						values = [ values ];
+					}
+					break;
+				case "number":
+					values = parseFloat(values);
+					break;
+				case "boolean":
+					values = (values.toLowerCase() === "true");
+					break;
+			}
+			buildObject(event, key.split("."), values);
+		}
 	});
 	db.saveDoc(event, {
 		success: function() {
@@ -138,10 +153,15 @@ function addProperty() {
 	var value = valueElement.val();
 	var node = $("#"+id);
 	if (node.length == 0) {
-		$("#properties").append($.mustache($("#property-key-template").html(), {
+		var info = {
 			key : key,
 			id : "property_"+key.replace(/\./g, '_')
-		}));
+		};
+		info.type = "new";
+		if (types[key]) {
+			info.type = types[key];
+		}
+		$("#properties").append($.mustache($("#property-key-template").html(), info));
 		node = $("#"+id);
 	}
 	node.append($.mustache($("#property-value-template").html(), {
