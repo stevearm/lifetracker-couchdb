@@ -8,26 +8,28 @@
 		<div>
 			Select function<br/>
 			<textarea id="select" rows="10" cols="100">function(doc) {
-	// Return true if you need to fix this document
-	return true;
+  // Return true if you need to fix this document
+  if (doc.pain.where == 'stomach') { return true; }
+  return false;
 }</textarea>
 		</div>
 		<button onclick="tryScanFunc();">Scan</button>
 		<div>
 			Fix function<br/>
 			<textarea id="fix" rows="10" cols="100">function(doc) {
-	// Fix the doc's properties
+  // Fix the doc's properties
+  console.log("The fix function works");
 }</textarea>
 		</div>
 		<button onclick="tryFixFunc();">Process</button>
+		<button onclick="saveCurrent();">Save current</button>
+		<button onclick="skipCurrent();">Skip current</button>
 		<div id="from">
 			From: <span class="value"/>
 		</div>
 		<div id="to">
 			To: <span class="value"/>
 		</div>
-		<button onclick="saveCurrent();">Save current</button>
-		<button onclick="skipCurrent();">Skip current</button>
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
@@ -40,32 +42,70 @@
 var sourceEvents;
 var fromSpan;
 var toSpan;
-var fixFunction;
+var fixFail = function(error) {
+	return function(ignore) {
+		toSpan.text("Fix function is broken: " + error);
+	};
+};
+var fixFunction = fixFail("Not parsed yet");
 
-function showCurrentFrom() {
-	var event = sourceEvents[0];
-	fromSpan.text(JSON.stringify(event));
-	showCurrentTo();
+var showCurrentFrom = function() {
+	if (sourceEvents.length == 0) {
+		fromSpan.text("No events");
+	} else {
+		var event = sourceEvents[0];
+		fromSpan.text(JSON.stringify(event));
+		showCurrentTo();
+	}
+};
+
+var showCurrentTo = function() {
+	var sourceText = fromSpan.text();
+	if (sourceText == "No events") {
+		toSpan.text("No events");
+	} else {
+		var event = JSON.parse(sourceText);
+		fixFunction(event);
+		toSpan.text(JSON.stringify(event));
+	}
+};
+
+var saveCurrent = function() {
+	var event = JSON.parse(toSpan.text());
+	console.debug("Saving updated event", event);
+	db.saveDoc(event, {
+		success: function() {
+			skipCurrent();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			toSpan.text("Cannot save event: " + textStatus);
+		}
+	});
 }
 
-function showCurrentTo() {
-	var sourceText = fromSpan.text()
-	console.log("About to run fix on", sourceText);
-	var event = JSON.parse();
-	fixFunction(event);
-	toSpan.text(JSON.stringify());
+var skipCurrent = function() {
+	sourceEvents.splice(0,1);
+	showCurrentFrom();
 }
 
-function tryFixFunc() {
+var tryFixFunc = function() {
 	var userFunc = $("#fix").val();
 	var fix;
-	eval("fix="+userFunc);
-	fixFunction = fix;
-}
+	try {
+		eval("fix="+userFunc);
+		fixFunction = fix;
+	} catch (e) {
+		if (e.name == "SyntaxError") {
+			fixFunction = fixFail(e.toString());
+		}
+	}
+	showCurrentTo();
+};
 
-function tryScanFunc() {
+var tryScanFunc = function() {
 	var userFunc = $("#select").val();
-	var selectText = "function(doc){if("+userFunc+"){emit(null,doc);}}";
+	var selectText = "function(doc){var test="+userFunc+";if(test(doc)){emit(null,doc);}}";
+	console.debug("Map function is: " + selectText);
 	var select;
 	eval("select="+selectText);
 	db.query(select, null, "javascript", {
@@ -79,9 +119,9 @@ function tryScanFunc() {
 			fromSpan.text("Failed loading: " + JSON.stringify(data));
 		}
 	});
-}
+};
 
-function bootstrap() {
+var bootstrap = function() {
 	fromSpan = $("#from > .value");
 	toSpan = $("#to > .value");
 };
