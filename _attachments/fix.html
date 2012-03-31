@@ -9,7 +9,7 @@
 			Select function<br/>
 			<textarea id="select" rows="10" cols="100">function(doc) {
   // Return true if you need to fix this document
-  if (doc.pain.where == 'stomach') { return true; }
+  if (!("type" in doc)) { return true; }
   return false;
 }</textarea>
 		</div>
@@ -18,7 +18,7 @@
 			Fix function<br/>
 			<textarea id="fix" rows="10" cols="100">function(doc) {
   // Fix the doc's properties
-  console.log("The fix function works");
+  doc.type="event";
 }</textarea>
 		</div>
 		<button onclick="tryFixFunc();">Process</button>
@@ -78,7 +78,7 @@ var saveCurrent = function() {
 			skipCurrent();
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
-			toSpan.text("Cannot save event: " + textStatus);
+			toSpan.text("Cannot save event: " + errorThrown);
 		}
 	});
 }
