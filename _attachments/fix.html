@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Lifetracker</title>
+		<link rel="stylesheet" href="style/main.css" type="text/css">
+	</head>
+	<body>
+		<div>
+			Select function<br/>
+			<textarea id="select" rows="10" cols="100">function(doc) {
+	// Return true if you need to fix this document
+	return true;
+}</textarea>
+		</div>
+		<button onclick="tryScanFunc();">Scan</button>
+		<div>
+			Fix function<br/>
+			<textarea id="fix" rows="10" cols="100">function(doc) {
+	// Fix the doc's properties
+}</textarea>
+		</div>
+		<button onclick="tryFixFunc();">Process</button>
+		<div id="from">
+			From: <span class="value"/>
+		</div>
+		<div id="to">
+			To: <span class="value"/>
+		</div>
+		<button onclick="saveCurrent();">Save current</button>
+		<button onclick="skipCurrent();">Skip current</button>
+	</body>
+	<script src="/_utils/script/sha1.js"></script>
+	<script src="/_utils/script/json2.js"></script>
+	<script src="/_utils/script/jquery.js"></script>
+	<script src="/_utils/script/jquery.couch.js"></script>
+	<script src="vendor/couchapp/md5.js"></script>
+	<script src="script/app.js"></script>
+	<script src="script/helpers/walkNodes.js"></script>
+	<script type="text/javascript">
+var sourceEvents;
+var fromSpan;
+var toSpan;
+var fixFunction;
+
+function showCurrentFrom() {
+	var event = sourceEvents[0];
+	fromSpan.text(JSON.stringify(event));
+	showCurrentTo();
+}
+
+function showCurrentTo() {
+	var sourceText = fromSpan.text()
+	console.log("About to run fix on", sourceText);
+	var event = JSON.parse();
+	fixFunction(event);
+	toSpan.text(JSON.stringify());
+}
+
+function tryFixFunc() {
+	var userFunc = $("#fix").val();
+	var fix;
+	eval("fix="+userFunc);
+	fixFunction = fix;
+}
+
+function tryScanFunc() {
+	var userFunc = $("#select").val();
+	var selectText = "function(doc){if("+userFunc+"){emit(null,doc);}}";
+	var select;
+	eval("select="+selectText);
+	db.query(select, null, "javascript", {
+		success: function(data){
+			sourceEvents = data.rows.map(function(obj){
+				return obj.value;
+			});
+			showCurrentFrom();
+		},
+		error: function(data){
+			fromSpan.text("Failed loading: " + JSON.stringify(data));
+		}
+	});
+}
+
+function bootstrap() {
+	fromSpan = $("#from > .value");
+	toSpan = $("#to > .value");
+};
+	</script>
+</html>
