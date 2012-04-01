@@ -94,29 +94,43 @@ function buildObject(event, keyParts, value) {
 function saveEvent() {
 	var event = {"type":"event"};
 	event.when = getWhen();
-	$('#properties').children().each(function(key,node){
-		var node = $(node);
-		var key = node.children(".key").text();
-		var values = [];
-		node.children("button").each(function(key, node){
-			values.push($(node).text());
+	try {
+		$('#properties').children().each(function(key,node){
+			var node = $(node);
+			var key = node.children(".key").text();
+			var values = [];
+			node.children("button").each(function(key, node){
+				values.push($(node).text());
+			});
+			if (values.length == 1) { values = values[0]; }
+			
+			var forceNoArray = function(values, key, type) {
+				if (Array.isArray(values)) { throw(key + " should be a " + type + " not an array"); }
+			};
+			
+			switch (node.attr("type")) {
+				case "array":
+					if (!Array.isArray(values)) {
+						values = [ values ];
+					}
+					break;
+				case "number":
+					forceNoArray(values, key, "number");
+					values = parseFloat(values);
+					break;
+				case "boolean":
+					forceNoArray(values, key, "boolean");
+					values = (values.toLowerCase() === "true");
+					break;
+				case "string":
+					forceNoArray(values, key, "string");
+			}
+			buildObject(event, key.split("."), values);
 		});
-		if (values.length == 1) { values = values[0]; }
-		switch (node.attr("type")) {
-			case "array":
-				if (!Array.isArray(values)) {
-					values = [ values ];
-				}
-				break;
-			case "number":
-				values = parseFloat(values);
-				break;
-			case "boolean":
-				values = (values.toLowerCase() === "true");
-				break;
-		}
-		buildObject(event, key.split("."), values);
-	});
+	} catch (e) {
+		alert(e);
+		return;
+	}
 	db.saveDoc(event, {
 		success: function() {
 			window.location.href = "./index.html";
