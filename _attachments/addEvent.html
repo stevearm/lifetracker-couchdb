@@ -26,12 +26,9 @@
 	<script src="/_utils/script/sha1.js"></script>
 	<script src="/_utils/script/json2.js"></script>
 	<script src="/_utils/script/jquery.couch.js"></script>
-	<script src="vendor/couchapp/jquery.couchLogin.js"></script>
-	<script src="vendor/couchapp/jquery.couchProfile.js"></script>
 	<script src="vendor/couchapp/md5.js"></script>
 	<script src="vendor/couchapp/jquery.mustache.js"></script>
-
-	<!-- templates used by app.js -->
+	
 	<script id="property-key-template" type="text/x-mustache" charset="utf-8">
 		<li class="event-node-value" id="{{id}}" type="{{type}}">
 			<span class="key">{{key}}</span> =
@@ -40,9 +37,19 @@
 	<script id="property-value-template" type="text/x-mustache" charset="utf-8">
 		<button onclick="removeProperty(this);">{{value}}</button>
 	</script>
-	<script src="script/app.js"></script>
 	<script type="text/javascript">
 var types = {};
+
+var design;
+var db;
+$(function() {
+	db = $.couch.db(unescape(document.location.pathname).split('/')[1]);
+	design = unescape(document.location.pathname).split('/')[3];
+	initDate();
+	populateKeyAutoSuggest();
+	$("#new-key").blur(populateValueAutoSuggest);
+});
+
 function populateKeyAutoSuggest() {
 	db.view(design + "/types", {
 		group: true,
@@ -85,7 +92,7 @@ function buildObject(event, keyParts, value) {
 }
 
 function saveEvent() {
-	var event = {};
+	var event = {"type":"event"};
 	event.when = getWhen();
 	$('#properties').children().each(function(key,node){
 		var node = $(node);
@@ -95,25 +102,20 @@ function saveEvent() {
 			values.push($(node).text());
 		});
 		if (values.length == 1) { values = values[0]; }
-		var type = node.attr("type");
-		if (type === "new") {
-			newEvents[key] = values;
-		} else {
-			switch (type) {
-				case "array":
-					if (!Array.isArray(values)) {
-						values = [ values ];
-					}
-					break;
-				case "number":
-					values = parseFloat(values);
-					break;
-				case "boolean":
-					values = (values.toLowerCase() === "true");
-					break;
-			}
-			buildObject(event, key.split("."), values);
+		switch (node.attr("type")) {
+			case "array":
+				if (!Array.isArray(values)) {
+					values = [ values ];
+				}
+				break;
+			case "number":
+				values = parseFloat(values);
+				break;
+			case "boolean":
+				values = (values.toLowerCase() === "true");
+				break;
 		}
+		buildObject(event, key.split("."), values);
 	});
 	db.saveDoc(event, {
 		success: function() {
@@ -171,11 +173,27 @@ function addProperty() {
 	valueElement.focus();
 }
 
-function bootstrap() {
-	initDate();
-	
-	populateKeyAutoSuggest();
-	$("#new-key").blur(populateValueAutoSuggest);
+function fill(number) {
+	if (number <= 9) { return "0"+number; }
+	return ""+number;
+}
+
+function initDate() {
+	var now = new Date();
+	$("#when-date").val(now.getFullYear()+"-"+fill(now.getMonth() + 1)+ "-"+fill(now.getDate()));
+	var fillSelect = function(element, max, current) {
+		for (var i = 0; i < max; i++) {
+			var temp = fill(i);
+			if (i == current) {
+				temp = '<option selected>'+temp+'</option>';
+			} else {
+				temp = '<option>'+temp+'</option>';
+			}
+			element.append(temp);
+		}
+	}
+	fillSelect($("#when-hour"), 24, now.getHours());
+	fillSelect($("#when-min"), 60, now.getMinutes());
 }
 	</script>
 </html>
