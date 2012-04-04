@@ -30,6 +30,7 @@
 				{{/properties}}
 				</ul>
 			</div>
+			<span style="font-size: small;"><a href="addEvent.html#id={{id}}">EDIT</a></span>
 		</div>{{/events}}
 	</script>
 
@@ -45,14 +46,14 @@ function bootstrap() {
 			var template = $("#recent-events-template").html();
 			var html = $.mustache(template, {
 				events : data.rows.map(function(r) {
-					var result = {};
+					var result = { id: r.value._id };
 					var when = r.value.when.local;
 					result.when = when[0]+"-"+when[1]+"-"+when[2]+" @"+fill(when[3])+":"+fill(when[4]);
 					delete r.value.when;
 					result.properties = [];
 					processNode(null, r.value, {
 						"array" : function(prefix, node) {
-							result.properties.push({"key":prefix, "value":"( "+node.join(", ")+" )"}); 
+							result.properties.push({"key":prefix, "value":"[ "+node.join(", ")+" ]"}); 
 						},
 						"value" : function(prefix, node) { result.properties.push({"key":prefix, "value":node}); }
 					});

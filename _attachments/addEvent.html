@@ -21,6 +21,7 @@
 			Value <input id="new-value" type="text"/><br/>
 			<button onclick="addProperty();">+</button><br/>
 			<button onclick="saveEvent();">Save</button>
+			<button onclick="deleteEvent();">Delete</button>
 		</div>
 	</body>
 	<script src="/_utils/script/sha1.js"></script>
@@ -37,7 +38,9 @@
 	<script id="property-value-template" type="text/x-mustache" charset="utf-8">
 		<button onclick="removeProperty(this);">{{value}}</button>
 	</script>
+	<script src="script/helpers/walkNodes.js"></script>
 	<script type="text/javascript">
+var myevent = {};
 var types = {};
 
 var design;
@@ -46,11 +49,44 @@ $(function() {
 	db = $.couch.db(unescape(document.location.pathname).split('/')[1]);
 	design = unescape(document.location.pathname).split('/')[3];
 	initDate();
-	populateKeyAutoSuggest();
 	$("#new-key").blur(populateValueAutoSuggest);
+	
+	populateKeyAutoSuggest(function() {
+		var hash = document.location.hash.substring(1);
+		if (hash.length == 0) {
+			addKeyValue("type","event");
+		} else {
+			var parts = hash.split("=");
+			if (parts[0] == "id") {
+				db.openDoc(parts[1], {
+					success: function(data) {
+						console.log("Loaded", data);
+						myevent._id = data._id;
+						myevent._rev = data._rev;
+						initDate(new Date(data.when.utc * 1000));
+						processNode(null, data, {
+							"array" : function(prefix, node) {
+								for (var i = 0; i < node.length; i++) {
+									addKeyValue(prefix, node[i]);
+								}
+							},
+							"value" : function(prefix, node) { addKeyValue(prefix, node); }
+						});
+					},
+					error: function(jqXHR, textStatus, errorThrown) {
+						if (jqXHR == 404) {
+							alert("Event does not exist");
+						} else {
+							alert("Some other error: " + textStatus);
+						}
+					}
+				});
+			}
+		}
+	});
 });
 
-function populateKeyAutoSuggest() {
+function populateKeyAutoSuggest(after) {
 	db.view(design + "/types", {
 		group: true,
 		success: function(data) {
@@ -59,6 +95,7 @@ function populateKeyAutoSuggest() {
 				return r.key;
 			});
 			$("#new-key").autocomplete({"source":results});
+			after();
 		}
 	});
 }
@@ -92,8 +129,7 @@ function buildObject(event, keyParts, value) {
 }
 
 function saveEvent() {
-	var event = {"type":"event"};
-	event.when = getWhen();
+	myevent.when = getWhen();
 	try {
 		$('#properties').children().each(function(key,node){
 			var node = $(node);
@@ -125,18 +161,33 @@ function saveEvent() {
 				case "string":
 					forceNoArray(values, key, "string");
 			}
-			buildObject(event, key.split("."), values);
+			buildObject(myevent, key.split("."), values);
 		});
 	} catch (e) {
 		alert(e);
 		return;
 	}
-	db.saveDoc(event, {
+	db.saveDoc(myevent, {
 		success: function() {
 			window.location.href = "./index.html";
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
 			alert("Cannot save event: " + textStatus);
+		}
+	});
+}
+
+function deleteEvent() {
+	if (!myevent._id) {
+		window.location.href = "./index.html";
+	}
+	
+	db.removeDoc(myevent, {
+		success: function() {
+			window.location.href = "./index.html";
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("Cannot delete event: " + textStatus);
 		}
 	});
 }
@@ -163,17 +214,21 @@ function removeProperty(node) {
 }
 
 function addProperty() {
-	var key = $("#new-key").val();
-	var id = "property_"+key.replace(/\./g, '_');
 	var valueElement = $("#new-value");
-	var value = valueElement.val();
+	addKeyValue($("#new-key").val(), valueElement.val());
+	valueElement.val('');
+	valueElement.focus();
+}
+
+function addKeyValue(key, value) {
+	var id = "property_"+key.replace(/\./g, '_');
 	var node = $("#"+id);
 	if (node.length == 0) {
 		var info = {
 			key : key,
-			id : "property_"+key.replace(/\./g, '_')
+			id : "property_"+key.replace(/\./g, '_'),
+			type: "new"
 		};
-		info.type = "new";
 		if (types[key]) {
 			info.type = types[key];
 		}
@@ -183,8 +238,6 @@ function addProperty() {
 	node.append($.mustache($("#property-value-template").html(), {
 		value : value
 	}));
-	valueElement.val('');
-	valueElement.focus();
 }
 
 function fill(number) {
@@ -192,8 +245,8 @@ function fill(number) {
 	return ""+number;
 }
 
-function initDate() {
-	var now = new Date();
+function initDate(now) {
+	if (!now) { now = new Date(); }
 	$("#when-date").val(now.getFullYear()+"-"+fill(now.getMonth() + 1)+ "-"+fill(now.getDate()));
 	var fillSelect = function(element, max, current) {
 		for (var i = 0; i < max; i++) {

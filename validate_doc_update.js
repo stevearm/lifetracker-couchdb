@@ -1,5 +1,9 @@
 function(newDoc, oldDoc, userCtx) {
+	// Helper functions
 	var fail = function(message) { throw({"forbidden":message}); };
+	
+	// Don't validate a deletion request
+	if (newDoc._deleted) { return; }
 	
 	if (!("type" in newDoc)) { fail("Documents must have a type"); }
 	switch (newDoc.type) {
