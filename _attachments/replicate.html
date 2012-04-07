@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Lifetracker</title>
+	</head>
+	<body>
+		<div>
+			<div id="targets"></div>
+			Target: <input id="new-target" type="text" size="40"/>
+			<button onclick="addNewTarget(); ">+</button>
+		</div>
+		<hr>
+		<div>Conflicts
+			<button onclick="loadConflicts(); ">Refresh</button>
+			<ul id="conflicts"/>
+		</div>
+	</body>
+	<script src="/_utils/script/sha1.js"></script>
+	<script src="/_utils/script/json2.js"></script>
+	<script src="/_utils/script/jquery.js"></script>
+	<script src="/_utils/script/jquery.couch.js"></script>
+	<script src="vendor/couchapp/md5.js"></script>
+	<script src="vendor/couchapp/jquery.mustache.js"></script>
+	
+	<!-- templates used by app.js -->
+	<script id="target-template" type="text/x-mustache" charset="utf-8">{{#targets}}
+		<div>
+			{{.}} <a href="{{.}}/_design/ui/index.html" target="_new">Open</a>
+			<button onclick="replicate(db.name, '{{.}}', this);">Push</button>
+			<button onclick="replicate('{{.}}', db.name, this);">Pull</button>
+			<button onclick="deleteTarget('{{.}}');">Drop</button>
+			<span class="results"></span>
+		</div>{{/targets}}
+	</script>
+	<script id="conflict-template" type="text/x-mustache" charset="utf-8">{{#conflicts}}
+		<li>Doc id: {{id}} <a href="addEvent.html#id={{id}}" target="_new">Edit</a>{{#revs}}
+			<div>
+				<span id="{{id}}_{{rev}}"/>
+				<button onclick="deleteRev('{{id}}', '{{rev}}');">Delete</button>
+			</div>{{/revs}}
+		</li>{{/conflicts}}
+	</script>
+	
+	<script type="text/javascript">
+var db, design, prefs;
+$(function() {
+	db = $.couch.db(unescape(document.location.pathname).split('/')[1]);
+	design = unescape(document.location.pathname).split('/')[3];
+	refreshPrefs(function(){ refreshTargets(); });
+	loadConflicts();
+});
+
+var deleteRev = function(id, rev) {
+	db.removeDoc({"_id":id, "_rev":rev}, {
+		success: function(data) {
+			$("#"+id+"_"+rev).parent().remove();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("Could not delete revision: " + textStatus);
+		}
+	});
+};
+
+var loadRev = function(id, rev) {
+	db.openDoc(id, {
+		"rev": rev,
+		success: function(data) {
+			$("#"+id+"_"+rev).html(JSON.stringify(data));
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("Could not load revision: " + textStatus);
+		}
+	});
+};
+
+var loadConflicts = function() {
+	db.view(design + "/conflicts", {
+		update_seq : true,
+		success : function(data) {
+			if (data.rows.length == 0) {
+				$("#conflicts").html("<li>No conflicts</li>");
+			} else {
+				var templateObject = {
+					conflicts : data.rows.map(function(r) {
+						return {
+							id: r.id,
+							revs: r.value.map(function(r2) { return { "id":r.id, "rev":r2 }; })
+						};
+					})
+				};
+				var template = $("#conflict-template").html();
+				$("#conflicts").html($.mustache(template, templateObject));
+				for (var i = 0; i < templateObject.conflicts.length; i++) {
+					var element = templateObject.conflicts[i];
+					for (var j = 0; j < element.revs.length; j++) {
+						loadRev(element.revs[j].id, element.revs[j].rev);
+					}
+				}
+			}
+		}
+	});
+};
+
+var replicate = function(from, to, node) {
+	var element = $(node).siblings(".results");
+	$.couch.replicate(from, to, {
+		success: function(data) {
+			if (data.ok) {
+				element.html(JSON.stringify(data.history[0]));
+				loadConflicts();
+			} else {
+				element.html("Error replicating: " + JSON.stringify(data));
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			element.html("Repliation failed: " + jqXHR + " " + textStatus);
+		}
+	});
+	element.html("Started replication from " + from + " to " + to);
+};
+
+var addNewTarget = function() {
+	prefs.targets.push($("#new-target").val());
+	savePrefs(function(){
+		refreshTargets();
+	});
+}
+
+var deleteTarget = function(target) {
+	for (var i = 0; i < prefs.targets.length; i++) {
+		if (prefs.targets[i] == target) {
+			prefs.targets.splice(i, 1);
+			break;
+		}
+	}
+	savePrefs(function(){
+		refreshTargets();
+	});
+};
+
+var refreshTargets = function() {
+	var template = $("#target-template").html();
+	var html = $.mustache(template, {
+		targets : prefs.targets
+	});
+	$("#targets").html(html);
+};
+
+var savePrefs = function(next) {
+	db.saveDoc(prefs, {
+		success: function(data) {
+			if (data.ok) {
+				prefs._rev = data.rev;
+				next();
+			} else {
+				alert("Something failed");
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("Cannot save event: " + textStatus);
+		}
+	});
+};
+
+var refreshPrefs = function(next) {
+	db.openDoc("prefs", {
+		success: function(data) {
+			prefs = data;
+			next();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			if (jqXHR == 404) {
+				prefs = {
+					_id: "prefs",
+					type: "prefs",
+					targets : []
+				};
+				next();
+			} else {
+				alert("Could not load preferences: " + textStatus);
+			}
+		}
+	});
+}
+	</script>
+</html>

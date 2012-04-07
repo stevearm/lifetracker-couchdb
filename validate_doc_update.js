@@ -22,6 +22,11 @@ function(newDoc, oldDoc, userCtx) {
 				fail("when.offset must be an integer");
 			}
 			break;
+		case "prefs":
+			if (newDoc._id != "prefs") {
+				fail("The only prefs document must be id=prefs");
+			}
+			break;
 		default:
 			fail("Unsupported document type: "+newDoc.type);
 	}
