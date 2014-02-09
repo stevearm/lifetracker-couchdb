@@ -1,0 +1,2 @@
+# .couchapprc holds passwords, so don't check in
+.couchapprc
