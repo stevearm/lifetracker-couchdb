@@ -1,0 +1,13 @@
+<div id="recent-events">
+    <div class="event" ng-repeat="event in events">
+        <div class="event-node-value">
+            <span class="event-node-key">when</span>{{ event.when }}
+        </div>
+        <div class="event-node-object">
+            <ul>
+                <li ng-repeat="property in event.properties"><b>{{ property.key }}</b> {{ property.value }}</li>
+            </ul>
+        </div>
+        <span style="font-size: small;"><a href="addEvent.html#id={{ event.id }}">EDIT</a></span>
+    </div>
+</div>

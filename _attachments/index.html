@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="lifetracker">
+    <head>
+        <meta charset="utf-8" />
+        <title>File Cabinet</title>
+        <link rel="stylesheet" type="text/css" href="lib/bootstrap-3.0.3/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="css/main.css"/>
+    </head>
+    <body>
+        <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+                <a class="navbar-brand" href="#/">Life Tracker</a>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a active-tab="1" href="#/">List events</a></li>
+                    <li><a active-tab="1" href="#/add">Add new</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div ng-view></div>
+        </div>
+
+        <script src="lib/angular-1.2.10/angular.min.js"></script>
+        <script src="lib/angular-1.2.10/angular-resource.min.js"></script>
+        <script src="lib/angular-1.2.10/angular-route.min.js"></script>
+        <script src="lib/ui-bootstrap-tpls-0.10.0.min.js"></script>
+
+        <!-- Setup a commonjs shim to use code shared with db-side views -->
+        <script src="js/exports.js"></script>
+        <script src="js/views-lib/helperFunctions.js"></script>
+
+        <script src="js/controllers.js"></script>
+        <script src="js/directives.js"></script>
+        <script src="js/factories.js"></script>
+        <script src="js/services.js"></script>
+        <script src="js/app.js"></script>
+    </body>
+</html>
