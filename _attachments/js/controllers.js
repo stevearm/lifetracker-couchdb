@@ -33,8 +33,8 @@ angular.module("lifetracker.controllers", [])
 ])
 
 .controller("AddCtrl", [
-    "$scope", "$http", "CouchService", "DateUtils", "Event",
-    function($scope, $http, CouchService, DateUtils, Event) {
+    "$scope", "$http", "$modal", "CouchService", "DateUtils", "Event",
+    function($scope, $http, $modal, CouchService, DateUtils, Event) {
         $scope.day = new Date();
         $scope.time = new Date();
         $scope.event = new Event({
@@ -102,17 +102,26 @@ angular.module("lifetracker.controllers", [])
             model[parts[parts.length-1]] = value;
         };
 
-        $scope.addProperty = function(key, value) {
-            console.log("Trying to define " + key + " as " + value, types);
+        var chooseDataType = function (key, value) {
+            $modal.open({
+                templateUrl: "partials/chooseDataTypeModal.html",
+                controller: "ChooseDataTypeCtrl",
+                resolve: {
+                    key: function () { return key; }
+                }
+            }).result.then(function (selected) {
+                $scope.addProperty(key, value, selected);
+            });
+        };
+
+        $scope.addProperty = function(key, value, chosenType) {
             var type = types[key];
             if (typeof(type) === "undefined") {
-                var existing = get(key);
-                if (typeof(existing) === "undefined") {
-                    set(key, value);
-                } else if (Array.isArray(existing)) {
-                    existing.push(value);
+                if (typeof(chosenType) === "undefined") {
+                    chooseDataType(key, value);
                 } else {
-                    set(key, [existing, value]);
+                    types[key] = chosenType;
+                    $scope.addProperty(key, value);
                 }
             } else {
                 switch (type) {
@@ -146,6 +155,25 @@ angular.module("lifetracker.controllers", [])
 
         $scope.deleteEvent = function() {
             $scope.event.$delete();
+        };
+    }
+])
+
+.controller("ChooseDataTypeCtrl", [
+    "$scope", "$modalInstance", "key",
+    function($scope, $modalInstance, key) {
+        $scope.key = key;
+        $scope.types = [ "array", "number", "boolean", "string" ];
+
+        // No idea why this needs to be an object, but it does
+        $scope.selected = { type: "string" };
+
+        $scope.ok = function () {
+            $modalInstance.close($scope.selected.type);
+        };
+
+        $scope.cancel = function () {
+            $modalInstance.dismiss("cancel");
         };
     }
 ]);

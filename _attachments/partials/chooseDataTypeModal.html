@@ -1,0 +1,15 @@
+<div class="modal-header">
+    <h3>New property</h3>
+</div>
+<div class="modal-body">
+    The <b>{{ key }}</b> property is new, and will be bound as <b>{{ selected.type }}</b>.
+    <ul>
+        <li ng-repeat="type in types">
+            <a ng-click="selected.type = type">{{ type }}</a>
+        </li>
+    </ul>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" ng-click="ok()">OK</button>
+    <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+</div>
