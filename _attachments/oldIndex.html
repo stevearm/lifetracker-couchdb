@@ -53,7 +53,7 @@ function bootstrap() {
 					result.when = when[0]+"-"+when[1]+"-"+when[2]+" @"+fill(when[3])+":"+fill(when[4]);
 					delete r.value.when;
 					result.properties = [];
-					processNode(null, r.value, {
+					processNode(r.value, {
 						"array" : function(prefix, node) {
 							result.properties.push({"key":prefix, "value":"[ "+node.join(", ")+" ]"}); 
 						},

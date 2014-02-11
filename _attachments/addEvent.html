@@ -64,7 +64,7 @@ $(function() {
 						myevent._id = data._id;
 						myevent._rev = data._rev;
 						initDate(new Date(data.when.utc * 1000));
-						processNode(null, data, {
+						processNode(data, {
 							"array" : function(prefix, node) {
 								for (var i = 0; i < node.length; i++) {
 									addKeyValue(prefix, node[i]);
