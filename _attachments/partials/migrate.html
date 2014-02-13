@@ -1,0 +1,20 @@
+<div class="row">
+    <div class="col-md-3">
+        <form>
+        <span ng-repeat="group in groups">
+            <input
+                type="radio"
+                ng-model="$parent.selectedGroup"
+                ng-value="group">{{ group.type }} v{{ group.version }}: {{ group.count }}<br/>
+        </span>
+        </form>
+    </div>
+    <div class="col-md-9">
+        <button ng-click="loadOne()">Load one</button>
+        <button ng-click="upgradeOne()">Upgrade current</button>
+        <button ng-click="currentDoc.$save()">Save current</button>
+        <button ng-click="upgradeBatch(100)">Upgrade 100</button>
+        <br/>
+        <pre>{{ currentDoc |json }}</pre>
+    </div>
+</div>

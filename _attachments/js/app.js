@@ -15,14 +15,18 @@ angular.module("lifetracker", [
     "$routeProvider",
     function($routeProvider) {
         $routeProvider
-        .when('/', {
-            templateUrl:    'partials/list.html',
-            controller:     'ListCtrl'
+        .when("/", {
+            templateUrl:    "partials/list.html",
+            controller:     "ListCtrl"
         })
-        .when('/add', {
-            templateUrl:    'partials/add.html',
-            controller:     'AddCtrl'
+        .when("/add", {
+            templateUrl:    "partials/add.html",
+            controller:     "AddCtrl"
         })
-        .otherwise({redirectTo: '/'});
+        .when("/migrate", {
+            templateUrl:    "partials/migrate.html",
+            controller:     "MigrateCtrl"
+        })
+        .otherwise({redirectTo: "/"});
     }
 ]);
