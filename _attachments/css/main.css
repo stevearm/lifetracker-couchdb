@@ -2,13 +2,10 @@
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
 body {
-    min-height: 2000px;
     padding-top: 70px;
 }
 
-body {
-}
-
+/* OLD JUNK ******************************************/
 #menu {
     width: 100%;
     height: 25px;

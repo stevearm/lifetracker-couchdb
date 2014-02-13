@@ -20,8 +20,12 @@ angular.module("lifetracker", [
             controller:     "ListCtrl"
         })
         .when("/add", {
-            templateUrl:    "partials/add.html",
-            controller:     "AddCtrl"
+            templateUrl:    "partials/event.html",
+            controller:     "EventCtrl"
+        })
+        .when("/event/:id", {
+            templateUrl:    "partials/event.html",
+            controller:     "EventCtrl"
         })
         .when("/migrate", {
             templateUrl:    "partials/migrate.html",

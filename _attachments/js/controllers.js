@@ -32,9 +32,9 @@ angular.module("lifetracker.controllers", [])
     }
 ])
 
-.controller("AddCtrl", [
-    "$scope", "$http", "$modal", "CouchService", "DateUtils", "Event",
-    function($scope, $http, $modal, CouchService, DateUtils, Event) {
+.controller("EventCtrl", [
+    "$scope", "$http", "$routeParams", "$modal", "CouchService", "DateUtils", "Event",
+    function($scope, $http, $routeParams, $modal, CouchService, DateUtils, Event) {
         $scope.day = new Date();
         $scope.time = new Date();
         $scope.event = new Event({
@@ -43,6 +43,13 @@ angular.module("lifetracker.controllers", [])
             when: DateUtils.toLocalIso8601(new Date()),
             data: {}
         });
+
+        if ($routeParams.id) {
+            $scope.event = Event.get({id: $routeParams.id}, function(event) {
+                $scope.day = new Date(event.when);
+                $scope.time = new Date(event.when);
+            });
+        }
 
         var updateTime = function() {
             var day = DateUtils.toLocalIso8601($scope.day);
@@ -137,7 +144,7 @@ angular.module("lifetracker.controllers", [])
                         set(key, parseFloat(value));
                         break;
                     case "boolean":
-                        set(key, values.toLowerCase() === "true");
+                        set(key, value.toLowerCase() === "true");
                         break;
                     case "string":
                         set(key, value);
