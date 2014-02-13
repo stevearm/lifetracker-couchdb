@@ -1,11 +1,16 @@
 <div class="row">
     <div class="col-md-3">
         <form>
-        <span ng-repeat="group in groups">
+        <span ng-repeat="group in groups |orderBy:['type','version']">
             <input
                 type="radio"
+                style="width: 20px"
                 ng-model="$parent.selectedGroup"
-                ng-value="group">{{ group.type }} v{{ group.version }}: {{ group.count }}<br/>
+                ng-value="group"
+                ng-hide="group.current">
+            <span ng-show="group.current" style="width: 20px; display: inline-block">&nbsp</span>
+            {{ group.type }} v{{ group.version }}: {{ group.count }}
+            <span ng-show="group.current">(current)</span><br/>
         </span>
         </form>
     </div>

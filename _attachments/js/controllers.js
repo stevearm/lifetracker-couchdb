@@ -179,53 +179,19 @@ angular.module("lifetracker.controllers", [])
 ])
 
 .controller("MigrateCtrl", [
-    "$scope", "$http", "CouchService", "Event",
-    function($scope, $http, CouchService, Event) {
+    "$scope", "$http", "CouchService", "Event", "MigrationService",
+    function($scope, $http, CouchService, Event, MigrationService) {
         $scope.selectedGroup = null;
         $scope.groups = [];
         $http.get(CouchService.viewUrl("versions") + "?group=true").success(function(data) {
             $scope.groups = data.rows.map(function(r){
-                return { type: r.key[0], version: r.key[1], count: r.value };
+                var type = r.key[0];
+                var version = r.key[1];
+                var current = MigrationService.currentVersion(type) == version;
+                return { type: type, version: version, count: r.value, current: current };
             });
             $scope.selectedGroup = $scope.groups[0];
         });
-
-        // Migration function definitions
-        var migrators = {
-            event: [
-                function(doc) {
-                    if ("version" in doc) {
-                        throw "Version 0 did not specify versions";
-                    }
-
-                    // Manually fix 'when'
-                    function pad(num) {
-                        var norm = Math.abs(Math.floor(num));
-                        return (norm < 10 ? '0' : '') + norm;
-                    }
-                    doc.when = doc.when.local[0] + "-"
-                        + pad(doc.when.local[1]) + "-"
-                        + pad(doc.when.local[2]) + "T"
-                        + pad(doc.when.local[3]) + ":"
-                        + pad(doc.when.local[4]) + "-"
-                        + pad(doc.when.offset / 60) + "00";
-
-                    // Move all other data
-                    var data = {};
-                    for (var key in doc) {
-                        if (key.charAt(0) == "_") { continue; }
-                        if (key == "type") { continue; }
-                        if (key == "when") { continue; }
-                        data[key] = doc[key];
-                        delete doc[key];
-                    }
-                    doc.data = data;
-
-                    // Set version
-                    doc.version = 1;
-                }
-            ]
-        };
 
         $scope.currentDoc = null;
         $scope.loadOne = function () {
@@ -241,16 +207,15 @@ angular.module("lifetracker.controllers", [])
             }
         };
 
-        var noop = function() {};
-
         $scope.upgradeOne = function () {
-            var fix = migrators[$scope.selectedGroup.type][$scope.selectedGroup.version] || noop;
-            fix($scope.currentDoc);
+            if ($scope.currentDoc != null) {
+                MigrationService.migrate($scope.currentDoc);
+            }
         };
 
         $scope.upgradeBatch = function(num) {
             if ($scope.selectedGroup != null) {
-                var fix = migrators[$scope.selectedGroup.type][$scope.selectedGroup.version];
+                var fix = MigrationService.migrator($scope.selectedGroup.type, $scope.selectedGroup.version);
                 if (fix != null) {
                     var handler = function(doc) {
                         fix(doc);
