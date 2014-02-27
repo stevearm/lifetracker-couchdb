@@ -68,14 +68,21 @@ angular.module("lifetracker.controllers", [])
                 return r.key;
             });
         });
+        $scope.suggestedKeys = function(value) {
+            return [value].concat($scope.keys).filter(function(e) {
+                return e.indexOf(value) != -1;
+            });
+        };
 
-        $scope.getSuggestedValues = function(key) {
+        $scope.getSuggestedValues = function(key, value) {
             return $http
                 .get(CouchService.viewUrl("values") + "?group=true&startkey=[\"" + key + "\"]&endkey=[\"" + key + "\",{}]")
                 .then(function(res) {
-                    return res.data.rows.map(function(r) {
+                    return [value].concat(res.data.rows.map(function(r) {
                         return r.key[1];
-                    });
+                    })).filter(function(e) {
+                        return e.indexOf(value) != -1;
+                    });;
                 });
         };
 
