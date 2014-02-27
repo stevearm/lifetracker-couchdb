@@ -96,14 +96,12 @@ angular.module("lifetracker.controllers", [])
 
         var set = function(key, value) {
             var parts = key.split(".");
-            var last = null;
             var model = $scope.event.data;
             for (var i = 0; i < parts.length - 1; i++) {
-                if (typeof(model) === "undefined") {
-                    model = {};
-                    last[parts[i-1]] = model;
+                console.log("Model, i, part", JSON.stringify(model), i, parts[i]);
+                if (!(parts[i] in model)) {
+                    model[parts[i]] = {};
                 }
-                last = model;
                 model = model[parts[i]];
             }
             model[parts[parts.length-1]] = value;
